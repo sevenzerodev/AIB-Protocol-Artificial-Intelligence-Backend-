@@ -5,7 +5,7 @@ public function onEnable(){
   $this->saveDefaultConfig();
   $this->config = $this->getConfig();
   $this->registeeBuiltinModels();
-  $this->getServer()->getCommandMap()->register("aib", new aib\command\AIBCommand($this));
+  $this->getServer()->getCommandMap()->register("aib", new \command\AIBCommand($this));
 }
 
 public static function getInstance(){
@@ -35,5 +35,47 @@ public static function getInstance(){
     $this->getLogger()->info("Registered AI model: " . $model->getModelId());
   }
 public function getModel($modelId){
-  
+  if (isset($this->modelRegistry[$modelId])) {
+            return $this->modelRegistry[$modelId];
+        }
+        return null;
+}
+public function getDefaultModel(){
+  $default = $this->config->get("default_model", null);
+  if($default !== null&&isset($this->modelRegistry[$default])){
+  return $this->modelRegistry[$default];
+  }
+  if(count($this->modelRegistry) > 0){
+    $keys = array_keys($this->modelRegistry);
+    return $this->modelRegistry[$keys[0]];
+  }
+  return null;
+}
+
+public function getRegisteredModel(){
+return $this->modelRegistry;
+  }
+
+public function query($prompt, $modelId = null, $systemprompt = null, callable $callback = null){
+  if($modelId !== null){
+    $mod = $this->getModel($modelId);}else{
+    $mod = $this->getDefaultModel();
+    }
+  if($mod === null){
+    throw new aib\exception\AIBException("No AI model available. Please configure an API key in config.yml.");
+  }
+  $task = new aib\task\AIQueryTask($this, $model, $prompt, $systemprompt, $callback);
+        $this->getServer()->getScheduler()->scheduleAsyncTask($task);
+  }
+
+public function querySync($prompt, $modelId = null, $systemprompt = null){
+if($modelId !== null){
+  $mod = $this->getModel($modelId);}else{
+  $mod = $this->getDefaultModel();
+  }
+  if($mod === null){
+    throw new aib\exception\AIBException("No AI model available. Please configure an API key in config.yml.");
+  }
+  return $mod->query($prompt, $systemprompt)
+}
 }
