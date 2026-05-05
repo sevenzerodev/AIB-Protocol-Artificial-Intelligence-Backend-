@@ -1,0 +1,5 @@
+name: AIB Protocol
+version: 1.0.3-dev
+main: Loader
+api: 2.0.0
+author: sz_
