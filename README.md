@@ -233,5 +233,6 @@ Model IDs follow the format `provider:modelname`. Examples:
 
 ## Author
 
-sz_
+Developed By SevenZero (ign: sz_)
+
 README written by chatgpt
