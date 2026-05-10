@@ -1,12 +1,17 @@
 <?php
 namespace model;
-class OpenRouterModel extends BaseModel{
 
-    public function getProviderName(){
+class OpenRouterModel extends BaseModel {
+    public function getProviderName() {
         return "openrouter";
     }
-    public function query($prompt, $systemPrompt = null){
-        $payload = $this->buildOpenAIPayload($prompt, $systemPrompt);
+
+    public function getCodeName() {
+        return "OpenRouter";
+    }
+
+    public function queryWithHistory($prompt, $systemPrompt, $history) {
+        $payload = $this->buildOpenAIPayload($prompt, $systemPrompt, $history);
         $result = $this->httpPost(
             "https://openrouter.ai/api/v1/chat/completions",
             [
@@ -17,7 +22,7 @@ class OpenRouterModel extends BaseModel{
             ],
             $payload
         );
-        if($result["code"] !== 200){
+        if($result["code"] !== 200) {
             throw new \exception\AIBException("OpenRouter returned HTTP " . $result["code"] . ": " . $result["body"]);
         }
         return $this->parseOpenAIResponse($result["body"]);
