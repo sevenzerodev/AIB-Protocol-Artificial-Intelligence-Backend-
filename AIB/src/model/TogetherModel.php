@@ -1,12 +1,17 @@
 <?php
 namespace model;
-class TogetherModel extends BaseModel{
 
-    public function getProviderName(){
+class TogetherModel extends BaseModel {
+    public function getProviderName() {
         return "together";
     }
-    public function query($prompt, $systemPrompt = null){
-        $payload = $this->buildOpenAIPayload($prompt, $systemPrompt);
+
+    public function getCodeName() {
+        return "Together AI";
+    }
+
+    public function queryWithHistory($prompt, $systemPrompt, $history) {
+        $payload = $this->buildOpenAIPayload($prompt, $systemPrompt, $history);
         $result = $this->httpPost(
             "https://api.together.xyz/v1/chat/completions",
             [
@@ -15,10 +20,9 @@ class TogetherModel extends BaseModel{
             ],
             $payload
         );
-        if($result["code"] !== 200){
+        if($result["code"] !== 200) {
             throw new \exception\AIBException("Together AI returned HTTP " . $result["code"] . ": " . $result["body"]);
         }
-
         return $this->parseOpenAIResponse($result["body"]);
     }
 }
