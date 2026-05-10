@@ -1,46 +1,47 @@
 <?php
 namespace task;
-class AIQueryTask extends pocketmine\scheduler\AsyncTask{
-    private $serializedModel;
-    private $modelClass;
-    private $prompt;
-    private $systemPrompt;
-    private $result;
-    private $error;
 
-    public function __construct(\Loader $plugin, \model\AIModel $model, $prompt, $systemPrompt, $callback) {
-        $this->modelClass = get_class($model);
+class AIQueryTask extends \pocketmine\scheduler\AsyncTask {
+    public $serializedModel;
+    public $prompt;
+    public $systemPrompt;
+    public $callbackId;
+    public $serializedHistory;
+
+    public function __construct(\model\AIModel $model, $prompt, $systemPrompt, $callback, $history = []) {
+        static $counter = 0;
+        $counter++;
+        $this->callbackId = $counter;
         $this->serializedModel = serialize($model);
         $this->prompt = $prompt;
         $this->systemPrompt = $systemPrompt;
-        $this->storeLocal($callback);
+        $this->serializedHistory = serialize($history);
+        \Loader::getInstance()->storeCallback($this->callbackId, $callback);
     }
 
-    public function onRun(){
+    public function onRun() {
         $model = unserialize($this->serializedModel);
-        try{
-            $this->result = $model->query($this->prompt, $this->systemPrompt);
-            $this->error = null;
-        }catch(\Exception $e){
-            $this->result = null;
-            $this->error = $e->getMessage();
+        $history = unserialize($this->serializedHistory);
+        try {
+            $result = $model->queryWithHistory($this->prompt, $this->systemPrompt, $history);
+            $this->setResult(["result" => $result, "error" => null, "callbackId" => $this->callbackId, "prompt" => $this->prompt], true);
+        } catch(\Exception $e) {
+            $this->setResult(["result" => null, "error" => $e->getMessage(), "callbackId" => $this->callbackId, "prompt" => $this->prompt], true);
         }
     }
 
-    public function onCompletion(\pocketmine\Server $server){
-        $callback = $this->fetchLocal();
-        if($callback !== null && is_callable($callback)){
-            if($this->error !== null){
-                call_user_func($callback, null, $this->error);}else{
-                call_user_func($callback, $this->result, null);
-            }
+    public function onCompletion(\pocketmine\Server $server) {
+        $data = $this->getResult();
+        $callback = \Loader::getInstance()->fetchCallback($data["callbackId"]);
+        if($callback !== null && is_callable($callback)) {
+            call_user_func($callback, $data["result"], $data["error"]);
         }
         $event = new \event\AIResponseEvent(
             \Loader::getInstance(),
-            $this->prompt,
-            $this->result,
-            $this->error
+            $data["prompt"],
+            $data["result"],
+            $data["error"]
         );
-        $event->call();
+        $server->getPluginManager()->callEvent($event);
     }
 }
