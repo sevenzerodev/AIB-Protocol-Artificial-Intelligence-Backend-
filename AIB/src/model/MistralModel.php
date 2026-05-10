@@ -1,13 +1,17 @@
 <?php
 namespace model;
-class MistralModel extends BaseModel{
 
-    public function getProviderName(){
+class MistralModel extends BaseModel {
+    public function getProviderName() {
         return "mistral";
     }
 
-    public function query($prompt, $systemPrompt = null){
-        $payload = $this->buildOpenAIPayload($prompt, $systemPrompt);
+    public function getCodeName() {
+        return "Mistral AI";
+    }
+
+    public function queryWithHistory($prompt, $systemPrompt, $history) {
+        $payload = $this->buildOpenAIPayload($prompt, $systemPrompt, $history);
         $result = $this->httpPost(
             "https://api.mistral.ai/v1/chat/completions",
             [
@@ -16,8 +20,8 @@ class MistralModel extends BaseModel{
             ],
             $payload
         );
-        if($result["code"] !== 200){
-            throw new \aib\exception\AIBException("Mistral returned HTTP " . $result["code"] . ": " . $result["body"]);
+        if($result["code"] !== 200) {
+            throw new \exception\AIBException("Mistral returned HTTP " . $result["code"] . ": " . $result["body"]);
         }
         return $this->parseOpenAIResponse($result["body"]);
     }
