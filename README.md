@@ -67,6 +67,7 @@ models:
     api_key: "your-key-here"
     model: "gpt-4o-mini"
 ```
+' this might be different in the actual plugin based on updates '
 
 Only fill in the providers you want to use. Providers with an empty `api_key` are skipped.
 
