@@ -1,13 +1,17 @@
 <?php
 namespace model;
-class GroqModel extends BaseModel{
 
-    public function getProviderName(){
+class GroqModel extends BaseModel {
+    public function getProviderName() {
         return "groq";
     }
 
-    public function query($prompt, $systemPrompt = null){
-        $payload = $this->buildOpenAIPayload($prompt, $systemPrompt);
+    public function getCodeName() {
+        return "Groq";
+    }
+
+    public function queryWithHistory($prompt, $systemPrompt, $history) {
+        $payload = $this->buildOpenAIPayload($prompt, $systemPrompt, $history);
         $result = $this->httpPost(
             "https://api.groq.com/openai/v1/chat/completions",
             [
@@ -16,7 +20,7 @@ class GroqModel extends BaseModel{
             ],
             $payload
         );
-        if($result["code"] !== 200){
+        if($result["code"] !== 200) {
             throw new \exception\AIBException("Groq returned HTTP " . $result["code"] . ": " . $result["body"]);
         }
         return $this->parseOpenAIResponse($result["body"]);
